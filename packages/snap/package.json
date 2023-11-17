@@ -27,9 +27,11 @@
     "test": "jest"
   },
   "dependencies": {
+    "@bgd-labs/aave-address-book": "^2.11.0",
     "@metamask/snaps-types": "^3.0.1",
     "@metamask/snaps-ui": "^3.0.1",
-    "buffer": "^6.0.3"
+    "buffer": "^6.0.3",
+    "viem": "^1.19.3"
   },
   "devDependencies": {
     "@jest/globals": "^29.5.0",
