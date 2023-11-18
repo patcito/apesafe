@@ -7,40 +7,12 @@ import { heading, panel, text } from '@metamask/snaps-ui';
 import { createPublicClient, http } from 'viem';
 import { mainnet } from 'viem/chains';
 import { ethers } from 'ethers';
-import { ChainIds, detectAddress, detectProtocol } from './protocols';
-import { parse } from 'path';
-import { getChainId } from 'viem/_types/actions/public/getChainId';
-
-/**
- * Handle incoming JSON-RPC requests, sent through `wallet_invokeSnap`.
- *
- * @param args - The request handler args as object.
- * @param args.origin - The origin of the request, e.g., the website that
- * invoked the snap.
- * @param args.request - A validated JSON-RPC request object.
- * @returns The result of `snap_dialog`.
- * @throws If the request method is not valid for this snap.
- */
-export const onRpcRequest: OnRpcRequestHandler = ({ origin, request }) => {
-  switch (request.method) {
-    case 'hello':
-      return snap.request({
-        method: 'snap_dialog',
-        params: {
-          type: 'confirmation',
-          content: panel([
-            text(`Hello, **${origin}**!`),
-            text('This custom confirmation is just for display purposes.'),
-            text(
-              'But you can edit the snap source code to make it do something, if you want to!',
-            ),
-          ]),
-        },
-      });
-    default:
-      throw new Error('Method not found.');
-  }
-};
+import {
+  ChainIds,
+  detectAddress,
+  detectContractCreator,
+  detectProtocol,
+} from './protocols';
 
 export const onTransaction: OnTransactionHandler = async ({
   transaction,
@@ -49,46 +21,91 @@ export const onTransaction: OnTransactionHandler = async ({
 }) => {
   const provider = new ethers.BrowserProvider(ethereum);
 
-  const currentGasPrice = await ethereum.request({
-    method: 'eth_gasPrice',
-  });
+  console.log('full tx', transaction);
 
-  const response = await fetch('https://beaconcha.in/api/v1/execution/gasnow');
-  const insights = [
-    {
-      value: 'This is a transaction insight',
-      transaction: JSON.stringify(transaction),
-      transactionOrigin: JSON.stringify(transactionOrigin),
-      chainId: JSON.stringify(chainId) as ChainIds,
+  const insights = {
+    value: 'This is a transaction insight',
+    transaction: JSON.stringify(transaction),
+    transactionOrigin: JSON.stringify(transactionOrigin),
+    chainId: JSON.stringify(chainId) as ChainIds,
+    creator: 'unknown',
+    contractCreator: {
+      address: 'unknown',
+      txHash: 'unknown',
+      timestamp: 'unknown',
     },
-  ];
-
+  };
   const protocol = detectProtocol(transactionOrigin || '');
   const txTo = transaction.to as string;
-  const snapChainId = insights[0]?.chainId as ChainId;
+  const snapChainId = insights.chainId as ChainId;
   const parsedChainId = snapChainId.split(':')[1]?.replace('"', '') as ChainIds;
   console.log('insights chainid', chainId);
   console.log('snap chainid', snapChainId);
   console.log('parsed chainid', parsedChainId);
 
-  const contract = detectAddress(txTo, parsedChainId, protocol?.name || '');
+  const contract = await detectAddress(
+    txTo,
+    parsedChainId,
+    protocol?.name || '',
+    provider,
+    //@ts-ignore
+    transaction.data,
+  );
 
+  if (contract.address !== '') {
+    const contractCreatorResponse = await detectContractCreator(
+      contract.address,
+      provider,
+      parsedChainId,
+    );
+    if (contractCreatorResponse) {
+      insights.contractCreator = {
+        address: contractCreatorResponse.address,
+        txHash: contractCreatorResponse.txHash,
+        timestamp: contractCreatorResponse.timestamp,
+      };
+    }
+  }
+  let severity = 'normal';
+  if (insights.contractCreator.timestamp !== 'unknown') {
+    if (parseInt(insights.contractCreator.timestamp) < 2) {
+      severity = 'critical';
+    }
+  }
   const contractName = contract?.name === 'unknown' ? txTo : contract?.name;
+  const unsupported = typeof protocol?.name === 'undefined';
   return {
     content: panel([
-      heading('My Transaction Insights'),
-      text('Here are the insights:'),
-      /*      ...insights.map((insight) => text('value: ' + insight.value)),
-      ...insights.map((insight) => text('tx: ' + insight.transaction)),
-      ...insights.map((insight) =>
-        text('tx origin: ' + insight.transactionOrigin),
+      heading('ApeSafe Insights'),
+      text(
+        `protocol: ${unsupported ? '' : protocol?.name} ${
+          protocol?.name !== 'unknown'
+            ? unsupported
+              ? 'unsupported'
+              : '✅'
+            : '❌'
+        }`,
       ),
-      ...insights.map((insight) => text('chainId:' + insight.chainId)),
-      ...insights.map((insight) => text('currentGasPrice')),
-      ...insights.map((insight) => text(currentGasPrice)),
-      ...insights.map((insight) => text('blockNumber: ' + response.text)),*/
-      ...insights.map((insight) => text(`protocol: ${protocol?.name} ✅`)),
-      ...insights.map((insight) => text(`contract: ${contractName} ✅`)),
+      text(
+        `contract: ${contractName} ${
+          contractName !== 'unknown' && !unsupported
+            ? '✅'
+            : unsupported
+            ? ''
+            : '❌'
+        }`,
+      ),
+      text(
+        `creator address: ${insights.contractCreator.address} ${
+          contractName !== 'unknown' && !unsupported ? '✅' : ''
+        }`,
+      ),
+      text(
+        `created: ${insights.contractCreator.timestamp} days ago ${
+          severity === 'critical' ? (unsupported ? '' : '❌') : '✅'
+        }`,
+      ),
+      text(`creation tx: ${insights.contractCreator.txHash} `),
     ]),
   };
 };

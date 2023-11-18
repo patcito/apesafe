@@ -155,6 +155,10 @@ const uniswap = {
       address: '0x3fC91A3afd70395Cd496C647d5a6CC9D4B2b7FAD',
       name: 'UniversalRouter',
     },
+    {
+      address: '0xeC8B0F7Ffe3ae75d7FfAb09429e3675bb63503e4',
+      name: 'UniversalRouter',
+    },
   ],
   '10': [
     { address: '0x4200000000000000000000000000000000000006', name: 'WETH' },

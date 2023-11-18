@@ -136,10 +136,11 @@ const Index = () => {
   return (
     <Container>
       <Heading>
-        Welcome to <Span>template-snap</Span>
+        Welcome to <Span>ApeSafe Snap</Span>
       </Heading>
       <Subtitle>
-        Get started by editing <code>src/index.ts</code>
+        Prevent DNS highjacking hacks when swaping tokens on Uniswap, Curve,
+        Yearn, AAVE, mev.io and more!
       </Subtitle>
       <CardContainer>
         {state.error && (
@@ -192,15 +193,11 @@ const Index = () => {
         )}
         <Card
           content={{
-            title: 'Send Hello message',
+            title: 'Avoid getting hacked',
             description:
-              'Display a custom message within a confirmation screen in MetaMask.',
-            button: (
-              <SendHelloButton
-                onClick={handleSendHelloClick}
-                disabled={!state.installedSnap}
-              />
-            ),
+              'It is common for dapps to be perfectly secure yet they can still get their DNS hijacked by their provider, making user send funds to an exploiter contract.' +
+              'ApeSafe checks that the contract address is listed on the project github,' +
+              ' it also gives useful information such as the contract name and the project name and date of deployment.',
           }}
           disabled={!state.installedSnap}
           fullWidth={
@@ -211,10 +208,14 @@ const Index = () => {
         />
         <Notice>
           <p>
-            Please note that the <b>snap.manifest.json</b> and{' '}
-            <b>package.json</b> must be located in the server root directory and
-            the bundle must be hosted at the location specified by the location
-            field.
+            In 2022,{' '}
+            <a
+              href="https://blog.scorechain.com/curve-finance-dns-hack/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Curve.fi got their DNS hacked and users lost $570k
+            </a>
           </p>
         </Notice>
       </CardContainer>
