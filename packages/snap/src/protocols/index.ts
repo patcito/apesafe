@@ -58,7 +58,7 @@ export const detectContractCreator = async (
   provider: ethers.BrowserProvider,
   chainId: string,
 ) => {
-  let fetchUrl = `http://localhost:3004/getinfo?address=${address}&chainId=${chainId}`;
+  let fetchUrl = `https://apesafe-backend.vercel.app/getinfo?address=${address}&chainId=${chainId}`;
   let contractCreatorAddressResponse = await fetch(fetchUrl);
   const json =
     (await contractCreatorAddressResponse.json()) as EtherscanContractCreationResponse;
