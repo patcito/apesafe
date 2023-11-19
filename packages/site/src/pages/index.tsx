@@ -162,9 +162,10 @@ const Index = () => {
         {!state.installedSnap && (
           <Card
             content={{
-              title: 'Connect',
+              title:
+                'Connect (please run locally for now https://github.com/patcito/apesafe)',
               description:
-                'Get started by connecting to and installing the example snap.',
+                'please run locally for now see https://github.com/patcito/apesafe',
               button: (
                 <ConnectButton
                   onClick={handleConnectClick}
@@ -180,7 +181,7 @@ const Index = () => {
             content={{
               title: 'Reconnect',
               description:
-                'While connected to a local running snap this button will always be displayed in order to update the snap if a change is made.',
+                'please run locally for now see https://github.com/patcito/apesafe',
               button: (
                 <ReconnectButton
                   onClick={handleConnectClick}
